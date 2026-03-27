@@ -1,6 +1,9 @@
 # 类和面向对象
 
-【编写中...】
+!!! tip "AI 时代的思考"
+    在 AI 能秒写出任何类定义的今天，理解面向对象的核心不在于记住 `class` 的语法，而在于知道**什么时候该用类、什么时候不该用**。这一章的目标不是让你背会 Python 的 OOP 语法——AI 比你背得好——而是让你理解 OOP 背后的设计思想，以及 Python 和 C++ 在这件事上截然不同的哲学。
+
+    Python 的 OOP 更像是一种"约定"，而非强制约束。理解这些约定背后的原理，才是你真正需要掌握的东西。
 
 ## 定义类
 
@@ -382,7 +385,7 @@ Bird.grow(VirtualBird)
 # 101
 ```
 
-我们用一个“假鸟”成功欺骗了Python！看起来，self这个参数仅仅是一个参数，Python约定会在调用方法的时候把对象本身传进来，当然你也可以传进来别的东西，只要保证方法本身能正常工作！**Python里面有很多的约定，你可以遵守，也可以不遵守**，甚至self这个参数命也是约定! 不信你看：
+我们用一个"假鸟"成功欺骗了Python！看起来，self这个参数仅仅是一个参数，Python约定会在调用方法的时候把对象本身传进来，当然你也可以传进来别的东西，只要保证方法本身能正常工作！**Python里面有很多的约定，你可以遵守，也可以不遵守**，甚至self这个参数命也是约定! 不信你看：
 
 ```python
 class VirtualBird:
@@ -491,30 +494,911 @@ b.eat()
 
 ## 装饰器/注解
 
-这个 @staticmethod 看起来有点神秘,它是如何工作的呢? 
+这个 `@staticmethod` 看起来有点神秘，它究竟是如何工作的呢？
 
-你可以自己写一个装饰器:
+在 C++ 中，你可能用过属性（`[[nodiscard]]`、`[[deprecated]]`）或者模板元编程来给函数附加"元信息"。Python 的装饰器（Decorator）做的事情类似，但更加直接：**装饰器本质上是一个函数，它接收一个函数作为参数，返回一个新的函数**。
 
-装饰器把方法变成了函数~
+### 装饰器的本质
 
+先看一个最简单的例子：
+
+```python
+def my_decorator(func):
+    def wrapper(*args, **kwargs):
+        print("调用前")
+        result = func(*args, **kwargs)
+        print("调用后")
+        return result
+    return wrapper
+
+# 使用装饰器语法
+@my_decorator
+def say_hello():
+    print("Hello!")
+
+say_hello()
+# 调用前
+# Hello!
+# 调用后
+```
+
+`@my_decorator` 这个语法只是语法糖，等价于：
+
+```python
+say_hello = my_decorator(say_hello)
+```
+
+所以 `@staticmethod` 也不神秘，`staticmethod` 就是一个内置的"装饰器类"，它把普通函数包装成一个描述符对象，使得通过实例或类访问时都不会自动传入 `self`。
+
+### 写一个有用的装饰器
+
+来写一个记录函数执行时间的装饰器，这在 C++ 里需要手动插桩，在 Python 里可以非常优雅：
+
+```python
+import time
+import functools
+
+def timer(func):
+    @functools.wraps(func)  # 保留原函数的元信息（名字、文档等）
+    def wrapper(*args, **kwargs):
+        start = time.perf_counter()
+        result = func(*args, **kwargs)
+        elapsed = time.perf_counter() - start
+        print(f"{func.__name__} 耗时: {elapsed:.4f}s")
+        return result
+    return wrapper
+
+@timer
+def slow_function():
+    time.sleep(0.1)
+    return 42
+
+slow_function()
+# slow_function 耗时: 0.1003s
+```
+
+!!! note ":bulb: `@functools.wraps` 是什么？"
+    没有它，`slow_function.__name__` 会变成 `"wrapper"`，调试起来很困惑。`@functools.wraps(func)` 把原函数的元数据复制过来，这本身也是一个装饰器——装饰装饰器的装饰器 😄
+
+### 带参数的装饰器
+
+装饰器还可以带参数，只需要再包一层函数：
+
+```python
+def repeat(n):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            for _ in range(n):
+                result = func(*args, **kwargs)
+            return result
+        return wrapper
+    return decorator
+
+@repeat(3)
+def greet(name):
+    print(f"Hello, {name}!")
+
+greet("Python")
+# Hello, Python!
+# Hello, Python!
+# Hello, Python!
+```
+
+### :thinking: Python 装饰器 vs C++ 的类似机制
+
+| Python 装饰器 | C++ 对应机制 |
+|---|---|
+| `@staticmethod` | `static` 关键字 |
+| `@property` | getter/setter 方法 |
+| `@functools.lru_cache` | 手动实现 memoization 或第三方库 |
+| 自定义计时器 | RAII 计时对象 + 宏包裹 |
+| AOP（面向切面编程） | 需要大量模板元编程 |
+
+C++ 的 `[[deprecated]]`、`[[nodiscard]]` 等属性是编译期注解，只影响编译器行为；Python 的装饰器是运行期包装，直接改变函数行为。两者哲学不同，Python 更灵活但有运行时开销。
+
+!!! tip "AI 时代思考 🤖"
+    装饰器是 Python 中少数几个 AI **写得出但你必须理解**的特性之一。当你让 AI 写一个"带缓存的函数"时，它会给你 `@lru_cache`，但你需要知道：
+    
+    - 缓存是基于参数的哈希，参数必须是可哈希的
+    - 缓存不会自动过期，内存可能无限增长
+    - 在类方法上使用 `@lru_cache` 有 `self` 的坑
+    
+    理解装饰器的原理，才能判断 AI 给的方案是否适合你的场景。
+
+---
 
 ## 方法和函数的区别
 
+前面我们反复提到"方法偷偷传入 self"，现在来彻底搞清楚这件事。
 
+### 函数和绑定方法
 
-## 魔法方法:\_\_get\_\_
+在 Python 中，定义在类里的函数，根据访问方式的不同，会有不同的行为：
 
+```python
+class Bird:
+    def fly(self):
+        print(f"Bird at {id(self)} is flying")
 
-## 类方法
+b = Bird()
 
-类方法和静态方法之间有一些区别,
+# 通过类访问：得到的是普通函数
+print(type(Bird.fly))   # <class 'function'>
 
-定义在class中的函数，在实例化的时候才会变成方法，否则它依然只是个函数。
+# 通过实例访问：得到的是绑定方法（bound method）
+print(type(b.fly))      # <class 'method'>
+
+# 绑定方法已经把 self 绑定进去了
+print(b.fly.__self__)   # <__main__.Bird object at 0x...>
+print(b.fly.__func__)   # <function Bird.fly at 0x...>
+```
+
+**绑定方法（bound method）**就是函数 + 实例的组合体。调用 `b.fly()` 时，Python 自动把 `b` 作为第一个参数传给 `Bird.fly`，这就是为什么方法签名里有 `self`。
+
+### 验证一下
+
+```python
+class Bird:
+    def fly(self):
+        print(f"Flying! self is: {self}")
+
+b = Bird()
+
+# 这两种调用完全等价
+b.fly()               # 绑定方法调用
+Bird.fly(b)           # 非绑定函数调用，手动传 self
+```
+
+### :thinking: 和 C++ 的对比
+
+C++ 的成员函数在编译时就被绑定了，`this` 指针由编译器隐式处理，你无法把成员函数当普通函数传递（除非用函数指针或 `std::bind`）。
+
+Python 的绑定方法是运行期对象，可以到处传递：
+
+```python
+# 可以把方法存起来，像回调一样传递
+fly_func = b.fly    # 保存绑定方法
+fly_func()          # 调用时不需要再传 self
+# Flying! self is: <__main__.Bird object at 0x...>
+```
+
+这在 C++ 里需要 `std::function` + `std::bind` 才能做到：
+
+```cpp
+// C++
+auto fly_func = std::bind(&Bird::fly, b);
+fly_func();
+```
+
+Python 内置支持，更自然。
+
+---
+
+## 魔法方法：`__get__`
+
+现在来解释"方法如何从函数变成绑定方法"这个魔法背后的机制：**描述符协议**。
+
+### 什么是描述符
+
+如果一个对象定义了 `__get__`、`__set__`、`__delete__` 中的任意一个，它就是一个**描述符**。Python 的属性访问机制会在特定时机自动调用这些方法。
+
+函数对象就是描述符！它实现了 `__get__`：
+
+```python
+def fly(self):
+    print("flying")
+
+# 函数对象有 __get__ 方法
+print(hasattr(fly, '__get__'))  # True
+
+# 模拟类的属性访问过程
+class Bird:
+    pass
+
+# 直接访问描述符的 __get__：
+bound_method = fly.__get__(Bird(), Bird)
+print(type(bound_method))  # <class 'method'>
+bound_method()             # 等同于 b.fly()（不过 self 是随机的 Bird 实例）
+```
+
+当你访问 `b.fly` 时，Python 内部大概做了这件事：
+
+```python
+# Python 内部近似实现
+def __getattribute__(self, name):
+    attr = type(self).__dict__[name]  # 从类里找到函数
+    if hasattr(attr, '__get__'):
+        return attr.__get__(self, type(self))  # 调用 __get__，绑定 self
+    return attr
+```
+
+### 用描述符实现 `@property`
+
+`@property` 就是一个内置描述符，让你用属性语法调用方法：
+
+```python
+class Circle:
+    def __init__(self, radius):
+        self._radius = radius
+    
+    @property
+    def radius(self):
+        return self._radius
+    
+    @radius.setter
+    def radius(self, value):
+        if value < 0:
+            raise ValueError("半径不能为负数")
+        self._radius = value
+    
+    @property
+    def area(self):
+        import math
+        return math.pi * self._radius ** 2
+
+c = Circle(5)
+print(c.radius)  # 10  — 像属性一样访问，实际调用了方法
+print(c.area)    # 78.539...
+c.radius = 10    # 触发 setter，有验证逻辑
+c.radius = -1    # ValueError: 半径不能为负数
+```
+
+### :thinking: 和 C++ 的对比
+
+C++ 里的 getter/setter 需要显式定义方法并调用：
+
+```cpp
+// C++
+circle.getRadius();
+circle.setRadius(10);
+```
+
+Python 的 `@property` 让你保持"像访问属性"的语法，同时后端有方法逻辑。
+
+### 自定义描述符
+
+你也可以写自己的描述符，实现类型检查：
+
+```python
+class PositiveFloat:
+    """只允许正数的描述符"""
+    def __set_name__(self, owner, name):
+        self.name = name
+    
+    def __get__(self, obj, objtype=None):
+        if obj is None:
+            return self
+        return obj.__dict__.get(self.name, 0)
+    
+    def __set__(self, obj, value):
+        if not isinstance(value, (int, float)) or value <= 0:
+            raise ValueError(f"{self.name} 必须是正数，got {value}")
+        obj.__dict__[self.name] = float(value)
+
+class Rectangle:
+    width = PositiveFloat()
+    height = PositiveFloat()
+    
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+    
+    @property
+    def area(self):
+        return self.width * self.height
+
+r = Rectangle(3, 4)
+print(r.area)   # 12.0
+r.width = -1    # ValueError: width 必须是正数，got -1
+```
+
+这在 C++ 里需要大量模板代码才能实现，Python 的描述符协议让这变得非常简洁。
+
+---
+
+## 类方法 `@classmethod`
+
+前面我们学了 `@staticmethod`，现在来看它的兄弟：`@classmethod`。
+
+### 区别一眼看清
+
+```python
+class Bird:
+    species = "Aves"  # 类变量
+    
+    def __init__(self, name):
+        self.name = name
+    
+    @staticmethod
+    def info():
+        # 静态方法：不接收任何隐式参数
+        # 不能访问 cls 或 self
+        print("我是一只鸟")
+    
+    @classmethod
+    def create(cls, name):
+        # 类方法：第一个参数是类本身（cls）
+        # 可以访问类变量，可以创建实例
+        print(f"创建 {cls.species} 类的实例")
+        return cls(name)
+
+# 两种方法都可以通过类名或实例调用
+Bird.info()           # 我是一只鸟
+Bird.create("鹦鹉")   # 创建 Aves 类的实例
+
+b = Bird("麻雀")
+b.info()              # 我是一只鸟
+b.create("鸽子")      # 创建 Aves 类的实例
+```
+
+### 工厂方法模式 :star:
+
+`@classmethod` 最常见的用途是实现**工厂方法**——提供多种创建对象的方式（记得上面说 Python 没有构造函数重载吗？这就是优雅的解决方案）：
+
+```python
+class Date:
+    def __init__(self, year, month, day):
+        self.year = year
+        self.month = month
+        self.day = day
+    
+    @classmethod
+    def from_string(cls, date_string):
+        """从字符串 '2024-01-15' 创建日期"""
+        year, month, day = map(int, date_string.split('-'))
+        return cls(year, month, day)
+    
+    @classmethod
+    def today(cls):
+        """创建今天的日期"""
+        import datetime
+        now = datetime.date.today()
+        return cls(now.year, now.month, now.day)
+    
+    def __repr__(self):
+        return f"Date({self.year}, {self.month}, {self.day})"
+
+# 三种创建方式
+d1 = Date(2024, 1, 15)
+d2 = Date.from_string("2024-01-15")
+d3 = Date.today()
+
+print(d1)  # Date(2024, 1, 15)
+print(d2)  # Date(2024, 1, 15)
+```
+
+### 继承时的神奇之处
+
+`@classmethod` 的 `cls` 参数在子类中会自动变成子类本身，这在 `@staticmethod` 中是做不到的：
+
+```python
+class Animal:
+    name = "动物"
+    
+    @classmethod
+    def introduce(cls):
+        return f"我是 {cls.name}"
+    
+    @staticmethod
+    def static_intro():
+        return "我是动物（静态）"
+
+class Dog(Animal):
+    name = "狗"
+
+print(Animal.introduce())  # 我是 动物
+print(Dog.introduce())     # 我是 狗  ← cls 变成了 Dog！
+print(Dog.static_intro())  # 我是动物（静态）  ← 静态方法不感知子类
+```
+
+### :thinking: 和 C++ 的对比
+
+C++ 的 `static` 方法相当于 Python 的 `@staticmethod`，没有对应 `@classmethod` 的概念（因为 C++ 在编译期就确定了类型，不需要运行期的 `cls`）。Python 的 `@classmethod` + 继承组合非常强大，是多态工厂方法的利器。
+
+---
 
 ## 类继承
 
-### 调用超类方法
+Python 支持继承，语法比 C++ 简洁很多：
 
-### Override
+```python
+# C++
+// class Parrot : public Bird { ... };
+
+# Python
+class Parrot(Bird):
+    pass
+```
+
+### 单继承
+
+```python
+class Animal:
+    def __init__(self, name):
+        self.name = name
+    
+    def speak(self):
+        return f"{self.name} 发出声音"
+    
+    def __repr__(self):
+        return f"{type(self).__name__}(name={self.name!r})"
+
+class Dog(Animal):
+    def speak(self):  # 重写父类方法
+        return f"{self.name} 说：汪汪！"
+    
+    def fetch(self):  # 子类独有方法
+        return f"{self.name} 去捡球了"
+
+class Cat(Animal):
+    def speak(self):
+        return f"{self.name} 说：喵～"
+
+dog = Dog("旺财")
+cat = Cat("咪咪")
+
+print(dog.speak())   # 旺财 说：汪汪！
+print(cat.speak())   # 咪咪 说：喵～
+print(dog.fetch())   # 旺财 去捡球了
+
+# isinstance 检查继承关系
+print(isinstance(dog, Dog))     # True
+print(isinstance(dog, Animal))  # True  ← 继承链上的都是 True
+```
+
+### 多继承
+
+Python 支持多继承，C++ 也支持，但 Python 用 MRO（Method Resolution Order，方法解析顺序）来解决菱形继承问题：
+
+```python
+class Flyable:
+    def move(self):
+        return "飞行中"
+    
+    def ability(self):
+        return "会飞"
+
+class Swimmable:
+    def move(self):
+        return "游泳中"
+    
+    def ability(self):
+        return "会游泳"
+
+class Duck(Flyable, Swimmable):  # 多继承，顺序很重要！
+    def __init__(self, name):
+        self.name = name
+
+duck = Duck("唐老鸭")
+print(duck.move())     # 飞行中  ← 用了 Flyable 的，因为它在前面
+print(duck.ability())  # 会飞
+```
+
+### MRO：方法解析顺序
+
+Python 用 **C3 线性化算法**计算 MRO，你可以直接查看：
+
+```python
+print(Duck.__mro__)
+# (<class 'Duck'>, <class 'Flyable'>, <class 'Swimmable'>, <class 'object'>)
+
+# 或者
+print(Duck.mro())
+```
+
+MRO 决定了在多继承中，当多个父类有同名方法时，Python 选哪个。规则是：**深度优先，但按列表顺序，且保证每个类只出现一次**。
+
+菱形继承（最经典的多继承问题）：
+
+```python
+class A:
+    def hello(self):
+        return "A"
+
+class B(A):
+    def hello(self):
+        return "B"
+
+class C(A):
+    def hello(self):
+        return "C"
+
+class D(B, C):  # 菱形继承
+    pass
+
+print(D().hello())  # B  ← MRO: D -> B -> C -> A
+print(D.__mro__)
+# (<class 'D'>, <class 'B'>, <class 'C'>, <class 'A'>, <class 'object'>)
+```
+
+### :thinking: Python 多继承 vs C++ 多继承
+
+| 特性 | Python | C++ |
+|---|---|---|
+| 多继承支持 | ✅ 内置 | ✅ 支持，但复杂 |
+| 菱形继承 | MRO 自动解决 | 需要虚继承 `virtual` |
+| 方法查找顺序 | C3 线性化，确定性强 | 依赖虚继承和编译器 |
+| 接口/抽象类 | `abc.ABC` + `@abstractmethod` | 纯虚函数 `= 0` |
+
+C++ 的菱形继承需要这样处理：
+
+```cpp
+// C++
+class A { ... };
+class B : virtual public A { ... };  // 虚继承
+class C : virtual public A { ... };
+class D : public B, public C { ... };
+```
+
+Python 不需要这些，MRO 帮你搞定了。
+
+!!! tip "AI 时代思考 🤖"
+    多继承是一个 AI 特别容易写出但你需要仔细审查的场景。AI 可以给你生成合法的多继承代码，但它不一定知道你的 MRO 顺序是否符合业务逻辑。在 code review 时，看到多继承就要亲手打印一下 `__mro__`，确认方法解析顺序是你期望的。
+
+---
+
+## 调用超类方法
+
+在子类中重写了父类方法后，如果还想调用父类的实现，用 `super()`：
+
+```python
+class Animal:
+    def __init__(self, name, age):
+        self.name = name
+        self.age = age
+    
+    def describe(self):
+        return f"{self.name}，{self.age}岁"
+
+class Dog(Animal):
+    def __init__(self, name, age, breed):
+        super().__init__(name, age)  # 调用父类构造方法
+        self.breed = breed
+    
+    def describe(self):
+        base = super().describe()  # 调用父类的 describe
+        return f"{base}，{self.breed}犬"
+
+dog = Dog("旺财", 3, "柴")
+print(dog.describe())  # 旺财，3岁，柴犬
+```
+
+### `super()` 和 MRO 的关系
+
+`super()` 不是简单地"调用父类"，而是**按照 MRO 顺序调用下一个类**。这在多继承中至关重要：
+
+```python
+class A:
+    def greet(self):
+        print("A greet")
+
+class B(A):
+    def greet(self):
+        print("B greet")
+        super().greet()  # 按 MRO 调用下一个
+
+class C(A):
+    def greet(self):
+        print("C greet")
+        super().greet()
+
+class D(B, C):
+    def greet(self):
+        print("D greet")
+        super().greet()
+
+D().greet()
+# D greet
+# B greet
+# C greet   ← 注意：B 的 super() 调用的是 C，而不是 A！
+# A greet
+```
+
+MRO 是 `D -> B -> C -> A`，所以每个 `super()` 都沿着 MRO 往后走一步。
+
+### :thinking: 和 C++ 的对比
+
+C++ 需要显式指定父类名：
+
+```cpp
+// C++
+class Dog : public Animal {
+public:
+    Dog(string name, int age, string breed)
+        : Animal(name, age), breed_(breed) {}  // 显式调用父类构造
+    
+    string describe() override {
+        return Animal::describe() + "，" + breed_ + "犬";
+    }
+};
+```
+
+Python 的 `super()` 不需要写父类名，好处是改变继承关系时不用修改 `super()` 调用；C++ 的写法更明确，但改继承关系时需要改所有地方。
+
+---
+
+## Override：方法重写
+
+在 Python 中，重写父类方法只需要在子类中定义同名方法，不需要任何关键字：
+
+```python
+class Shape:
+    def area(self):
+        return 0
+    
+    def describe(self):
+        return f"面积: {self.area()}"
+
+class Circle(Shape):
+    def __init__(self, radius):
+        self.radius = radius
+    
+    def area(self):  # 重写，不需要任何关键字
+        import math
+        return math.pi * self.radius ** 2
+
+class Rectangle(Shape):
+    def __init__(self, w, h):
+        self.w = w
+        self.h = h
+    
+    def area(self):
+        return self.w * self.h
+
+shapes = [Circle(5), Rectangle(3, 4)]
+for s in shapes:
+    print(s.describe())
+# 面积: 78.539...
+# 面积: 12
+```
+
+Python 的多态是**鸭子类型**：只要对象有对应的方法，就可以调用，不需要继承关系。
+
+### :thinking: Python vs C++ 的多态
+
+| 特性 | Python | C++ |
+|---|---|---|
+| 重写语法 | 直接定义同名方法 | `override` 关键字（推荐）|
+| 虚函数 | 所有方法默认都是"虚的" | 必须显式声明 `virtual` |
+| 多态机制 | 鸭子类型，运行期动态 | 虚表（vtable），编译期确定 |
+| 性能 | 有运行时开销 | 虚函数调用稍有开销，但比 Python 快 |
+| 纯虚函数 | `@abstractmethod` | `= 0` |
+
+在 C++ 里，如果父类方法没有声明 `virtual`，子类重写后通过父类指针调用会调用父类版本（静态分派）。Python 不存在这个问题，所有方法调用都是动态分派。
+
+```cpp
+// C++：没有 virtual 的陷阱
+class Animal {
+public:
+    string speak() { return "..."; }           // 非虚
+    virtual string name() { return "Animal"; } // 虚
+};
+
+class Dog : public Animal {
+public:
+    string speak() { return "Woof"; }  // 隐藏，不是重写
+    string name() override { return "Dog"; }
+};
+
+Animal* a = new Dog();
+cout << a->speak();  // "..."  ← 调用了 Animal::speak，因为非虚
+cout << a->name();   // "Dog"  ← 正确，因为虚函数
+```
+
+Python 完全不用担心这个：
+
+```python
+# Python：所有方法都是"虚的"
+class Animal:
+    def speak(self):
+        return "..."
+
+class Dog(Animal):
+    def speak(self):
+        return "Woof"
+
+a = Dog()
+print(a.speak())  # "Woof"  ← 永远调用实际类型的方法
+```
+
+### 抽象方法
+
+如果你想强制子类必须重写某个方法（类似 C++ 的纯虚函数），用 `abc` 模块：
+
+```python
+from abc import ABC, abstractmethod
+
+class Shape(ABC):  # 继承 ABC
+    @abstractmethod
+    def area(self) -> float:
+        """子类必须实现这个方法"""
+        pass
+    
+    def describe(self):
+        return f"面积: {self.area()}"
+
+# Shape()  ← TypeError: 不能实例化抽象类
+
+class Circle(Shape):
+    def __init__(self, r):
+        self.r = r
+    
+    def area(self):
+        import math
+        return math.pi * self.r ** 2
+
+c = Circle(5)
+print(c.describe())  # 面积: 78.539...
+```
+
+---
 
 ## 异常
+
+Python 的异常处理和 C++ 的 try/catch 很像，但更简洁、更灵活。
+
+### 基本语法
+
+```python
+try:
+    x = 1 / 0
+except ZeroDivisionError:
+    print("除以零了！")
+
+# 除以零了！
+```
+
+对比 C++：
+
+```cpp
+// C++
+try {
+    int x = 1 / 0;
+} catch (const std::exception& e) {
+    std::cout << "异常: " << e.what() << std::endl;
+}
+```
+
+Python 更简洁，而且异常类型更细分。
+
+### 捕获多种异常
+
+```python
+def safe_divide(a, b):
+    try:
+        result = a / b
+    except ZeroDivisionError:
+        print("不能除以零")
+        return None
+    except TypeError as e:
+        print(f"类型错误: {e}")
+        return None
+    else:
+        # 没有异常时执行
+        print(f"结果: {result}")
+        return result
+    finally:
+        # 无论如何都会执行（类似 C++ 的 RAII 析构）
+        print("计算完毕")
+
+safe_divide(10, 2)
+# 结果: 5.0
+# 计算完毕
+
+safe_divide(10, 0)
+# 不能除以零
+# 计算完毕
+```
+
+### `else` 和 `finally`
+
+这是 Python 独有的：
+
+- `else`：只有 `try` 块**没有**抛出异常时才执行
+- `finally`：**无论如何**都会执行，类似 C++ 中 RAII 保证资源释放
+
+```python
+def read_file(path):
+    f = None
+    try:
+        f = open(path, 'r')
+        content = f.read()
+    except FileNotFoundError:
+        print(f"文件不存在: {path}")
+        return None
+    else:
+        print(f"成功读取 {len(content)} 个字符")
+        return content
+    finally:
+        if f:
+            f.close()  # 保证文件一定被关闭
+            print("文件已关闭")
+```
+
+!!! note ":bulb: 更 Pythonic 的写法"
+    实际上，Python 推荐用 `with` 语句管理资源，更简洁：
+    ```python
+    with open(path, 'r') as f:
+        content = f.read()
+    # 离开 with 块后文件自动关闭，相当于 C++ 的 RAII
+    ```
+
+### 自定义异常
+
+自定义异常就是继承 `Exception`（或其子类）：
+
+```python
+class BirdError(Exception):
+    """鸟类相关错误的基类"""
+    pass
+
+class TooYoungToFlyError(BirdError):
+    """太小了不会飞"""
+    def __init__(self, name, age, min_age):
+        self.name = name
+        self.age = age
+        self.min_age = min_age
+        super().__init__(
+            f"{name} 还不会飞（当前 {age} 岁，至少需要 {min_age} 岁）"
+        )
+
+class Bird:
+    MIN_FLY_AGE = 2
+    
+    def __init__(self, name, age):
+        self.name = name
+        self.age = age
+    
+    def fly(self):
+        if self.age < self.MIN_FLY_AGE:
+            raise TooYoungToFlyError(self.name, self.age, self.MIN_FLY_AGE)
+        print(f"{self.name} 在飞！")
+
+baby_bird = Bird("小麻雀", 1)
+
+try:
+    baby_bird.fly()
+except TooYoungToFlyError as e:
+    print(f"错误: {e}")
+except BirdError as e:
+    print(f"鸟类错误: {e}")
+# 错误: 小麻雀 还不会飞（当前 1 岁，至少需要 2 岁）
+```
+
+### 异常链
+
+Python 支持异常链，可以在捕获一个异常后抛出另一个，保留原始错误信息：
+
+```python
+try:
+    int("不是数字")
+except ValueError as e:
+    raise RuntimeError("数据处理失败") from e
+
+# Traceback 会显示两个异常：原始的 ValueError 和新的 RuntimeError
+```
+
+### :thinking: Python vs C++ 异常处理对比
+
+| 特性 | Python | C++ |
+|---|---|---|
+| 基本语法 | `try/except/else/finally` | `try/catch/` (无 else) |
+| 捕获所有 | `except Exception` | `catch (...)` |
+| 异常类型 | 类的继承体系 | 任意类型都可以 throw |
+| 资源管理 | `with` 语句（上下文管理器）| RAII（析构函数） |
+| 性能影响 | 异常路径有一定开销 | 零开销异常（ZEH）选项 |
+| 检查型异常 | 不存在（类似 C++ 的 noexcept 反面）| `noexcept` 声明 |
+
+C++ 可以 throw 任意类型（包括 `int`），Python 只能 throw 继承自 `BaseException` 的对象。
+
+!!! tip "AI 时代思考 🤖"
+    AI 生成的代码经常在异常处理上偷懒——要么 `except Exception: pass`（吞掉所有错误），要么完全不处理。
+    
+    你需要判断的是：
+    
+    - 这个错误**应该被捕获并恢复**，还是**应该让它传播**？
+    - `finally` 块是否会有副作用（比如关闭一个从未打开的连接）？
+    - 自定义异常是否携带了足够的上下文信息方便调试？
+    
+    异常设计是软件架构层面的判断，AI 做不了——它需要你来决定。
