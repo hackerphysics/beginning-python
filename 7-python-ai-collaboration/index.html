@@ -973,8 +973,10 @@
 </tbody>
 </table>
 <p>这些工具背后的模型（GPT-4、Claude、Gemini）能力越来越强，但工具本身是接口，底层逻辑一样：你给上下文，AI 生成代码。</p>
-<p>!!! tip "一个务实的建议"
-    不要在工具选择上花太多时间。先用最熟悉的那个，把它用好。核心能力是「如何与 AI 协作」，而不是哪个工具按钮在哪里。</p>
+<div class="admonition tip">
+<p class="admonition-title">一个务实的建议</p>
+<p>不要在工具选择上花太多时间。先用最熟悉的那个，把它用好。核心能力是「如何与 AI 协作」，而不是哪个工具按钮在哪里。</p>
+</div>
 <hr />
 <h2 id="73-ai">7.3 写出 AI 友好的代码 ✍️</h2>
 <p>这是本章最重要的部分。</p>
@@ -995,8 +997,10 @@
 </code></pre></div>
 <p>第一个函数，当你告诉 AI「帮我给 <code>proc</code> 加一个按 category 过滤的参数」，AI 需要猜 <code>d</code> 是什么，<code>t</code> 是什么，<code>x['ts']</code> 是什么。</p>
 <p>第二个函数，AI 直接明白：这是事件过滤，<code>cutoff_timestamp</code> 是截止时间，加 category 过滤逻辑就顺手了。</p>
-<p>!!! note "C++ 对比"
-    C++ 里你可能习惯了简短的局部变量名（<code>i</code>、<code>it</code>、<code>ptr</code>），因为作用域短、类型在声明处写清楚了。Python 里没有显式类型（至少历史上没有），变量名是唯一的语义来源。AI 时代，这个习惯值得调整。</p>
+<div class="admonition note">
+<p class="admonition-title">C++ 对比</p>
+<p>C++ 里你可能习惯了简短的局部变量名（<code>i</code>、<code>it</code>、<code>ptr</code>），因为作用域短、类型在声明处写清楚了。Python 里没有显式类型（至少历史上没有），变量名是唯一的语义来源。AI 时代，这个习惯值得调整。</p>
+</div>
 <h3 id="732-type-hints">7.3.2 类型注解（Type Hints）</h3>
 <p>Python 3.5+ 支持类型注解，但不强制——这是动态语言的「自愿类型系统」。</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># 没有类型注解</span>
@@ -1036,11 +1040,13 @@
 <a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;返回用于展示的用户名。优先使用真实姓名，其次使用 username。&quot;&quot;&quot;</span>
 <a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>    <span class="k">return</span> <span class="n">profile</span><span class="o">.</span><span class="n">username</span>
 </code></pre></div>
-<p>!!! tip "mypy 静态检查"
-    <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pip<span class="w"> </span>install<span class="w"> </span>mypy
+<div class="admonition tip">
+<p class="admonition-title">mypy 静态检查</p>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pip<span class="w"> </span>install<span class="w"> </span>mypy
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>mypy<span class="w"> </span>your_file.py
 </code></pre></div>
-    对 AI 生成的代码运行 mypy，能在运行前发现很多类型错误。</p>
+对 AI 生成的代码运行 mypy，能在运行前发现很多类型错误。</p>
+</div>
 <h3 id="733-docstring-ai">7.3.3 Docstring：给 AI 的指令手册</h3>
 <p>Docstring 不只是文档，它是你和 AI 的合约。</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">def</span> <span class="nf">send_notification</span><span class="p">(</span>
@@ -1122,8 +1128,10 @@
 <a id="__codelineno-5-42" name="__codelineno-5-42" href="#__codelineno-5-42"></a>    <span class="n">tax_rate</span> <span class="o">=</span> <span class="mf">0.13</span> <span class="k">if</span> <span class="n">is_business</span> <span class="k">else</span> <span class="mf">0.09</span>
 <a id="__codelineno-5-43" name="__codelineno-5-43" href="#__codelineno-5-43"></a>    <span class="k">return</span> <span class="n">amount</span> <span class="o">*</span> <span class="n">tax_rate</span>
 </code></pre></div>
-<p>!!! info "给 C++ 程序员"
-    你已经熟悉单一职责原则（SRP），这不是新概念。只是 AI 时代，这个原则的收益被放大了：小函数不仅对人友好，对 AI 也友好。</p>
+<div class="admonition info">
+<p class="admonition-title">给 C++ 程序员</p>
+<p>你已经熟悉单一职责原则（SRP），这不是新概念。只是 AI 时代，这个原则的收益被放大了：小函数不仅对人友好，对 AI 也友好。</p>
+</div>
 <hr />
 <h2 id="74-ai-python">7.4 审查 AI 生成的 Python 代码 🔍</h2>
 <p>AI 写的代码不能直接信任。不是因为 AI 坏，而是因为 AI 不了解你的业务上下文，不知道你的运行环境，有时候还会「自信地犯错」。</p>
@@ -1252,8 +1260,10 @@
 <a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a>
 <a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a>    <span class="k">return</span> <span class="n">target</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
 </code></pre></div>
-<p>!!! warning "让 AI 帮你做安全审查"
-    你可以直接问 AI：「检查这段代码有没有 SQL 注入、路径遍历、或者其他安全问题」。AI 做安全审查比写安全代码可靠得多——因为你给了它明确的任务目标。</p>
+<div class="admonition warning">
+<p class="admonition-title">让 AI 帮你做安全审查</p>
+<p>你可以直接问 AI：「检查这段代码有没有 SQL 注入、路径遍历、或者其他安全问题」。AI 做安全审查比写安全代码可靠得多——因为你给了它明确的任务目标。</p>
+</div>
 <hr />
 <h2 id="75-python-ai-api">7.5 用 Python 调用 AI API 🤖</h2>
 <p>最直接的 AI 协作方式：写 Python 代码调用 AI。</p>
@@ -1579,12 +1589,16 @@
 <p>最后一条特别重要：AI 时代，<strong>会提问比会写代码更重要</strong>。一个能精确描述需求、能正确审查输出、能快速迭代的工程师，比一个只会手写代码的工程师更有竞争力。</p>
 <p>而你的 C++ 背景，给了你理解「代码在做什么」的底层能力。这在 AI 时代比任何时候都更值钱——因为 AI 生成代码的速度越来越快，能真正读懂代码的人越来越稀缺。</p>
 <hr />
-<p>!!! success "小结"
-    - AI 编程时代，<strong>写好代码 = 给 AI 好上下文</strong>：命名、类型注解、Docstring 不是可选的
-    - <strong>审查 AI 代码</strong>：可变默认参数、浅拷贝、异步资源泄漏、安全问题是重灾区
-    - <strong>Python 调用 AI API</strong> 并不复杂，结构化输出和 Agent 模式是核心范式
-    - <strong>Python + C++ 是黄金组合</strong>，不是竞争关系
-    - 你的 C++ 背景是优势——懂底层的人，永远不会被 AI 完全替代</p>
+<div class="admonition success">
+<p class="admonition-title">小结</p>
+<ul>
+<li>AI 编程时代，<strong>写好代码 = 给 AI 好上下文</strong>：命名、类型注解、Docstring 不是可选的</li>
+<li><strong>审查 AI 代码</strong>：可变默认参数、浅拷贝、异步资源泄漏、安全问题是重灾区</li>
+<li><strong>Python 调用 AI API</strong> 并不复杂，结构化输出和 Agent 模式是核心范式</li>
+<li><strong>Python + C++ 是黄金组合</strong>，不是竞争关系</li>
+<li>你的 C++ 背景是优势——懂底层的人，永远不会被 AI 完全替代</li>
+</ul>
+</div>
 <hr />
 <p><em>恭喜你完成了整个教程！现在，去用 Python + AI 构建点什么吧。🚀</em></p>
 

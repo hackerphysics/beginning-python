@@ -1180,10 +1180,11 @@
 
 
 <h1 id="_1">类和面向对象</h1>
-<p>!!! tip "AI 时代的思考"
-    在 AI 能秒写出任何类定义的今天，理解面向对象的核心不在于记住 <code>class</code> 的语法，而在于知道<strong>什么时候该用类、什么时候不该用</strong>。这一章的目标不是让你背会 Python 的 OOP 语法——AI 比你背得好——而是让你理解 OOP 背后的设计思想，以及 Python 和 C++ 在这件事上截然不同的哲学。</p>
-<div class="highlight"><pre><span></span><code>Python 的 OOP 更像是一种&quot;约定&quot;，而非强制约束。理解这些约定背后的原理，才是你真正需要掌握的东西。
-</code></pre></div>
+<div class="admonition tip">
+<p class="admonition-title">AI 时代的思考</p>
+<p>在 AI 能秒写出任何类定义的今天，理解面向对象的核心不在于记住 <code>class</code> 的语法，而在于知道<strong>什么时候该用类、什么时候不该用</strong>。这一章的目标不是让你背会 Python 的 OOP 语法——AI 比你背得好——而是让你理解 OOP 背后的设计思想，以及 Python 和 C++ 在这件事上截然不同的哲学。</p>
+<p>Python 的 OOP 更像是一种"约定"，而非强制约束。理解这些约定背后的原理，才是你真正需要掌握的东西。</p>
+</div>
 <h2 id="_2">定义类</h2>
 <p>在Python中定义一个类：</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">class</span> <span class="nc">Bird</span><span class="p">:</span>
@@ -1616,8 +1617,10 @@ Python类对象
 <a id="__codelineno-31-19" name="__codelineno-31-19" href="#__codelineno-31-19"></a><span class="n">slow_function</span><span class="p">()</span>
 <a id="__codelineno-31-20" name="__codelineno-31-20" href="#__codelineno-31-20"></a><span class="c1"># slow_function 耗时: 0.1003s</span>
 </code></pre></div>
-<p>!!! note "<img alt="💡" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@16.0.1/assets/svg/1f4a1.svg" title=":bulb:" /> <code>@functools.wraps</code> 是什么？"
-    没有它，<code>slow_function.__name__</code> 会变成 <code>"wrapper"</code>，调试起来很困惑。<code>@functools.wraps(func)</code> 把原函数的元数据复制过来，这本身也是一个装饰器——装饰装饰器的装饰器 😄</p>
+<div class="admonition note">
+<p class="admonition-title"><img alt="💡" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@16.0.1/assets/svg/1f4a1.svg" title=":bulb:" /> <code>@functools.wraps</code> 是什么？</p>
+<p>没有它，<code>slow_function.__name__</code> 会变成 <code>"wrapper"</code>，调试起来很困惑。<code>@functools.wraps(func)</code> 把原函数的元数据复制过来，这本身也是一个装饰器——装饰装饰器的装饰器 😄</p>
+</div>
 <h3 id="_13">带参数的装饰器</h3>
 <p>装饰器还可以带参数，只需要再包一层函数：</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="k">def</span> <span class="nf">repeat</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
@@ -1671,14 +1674,16 @@ Python类对象
 </tbody>
 </table>
 <p>C++ 的 <code>[[deprecated]]</code>、<code>[[nodiscard]]</code> 等属性是编译期注解，只影响编译器行为；Python 的装饰器是运行期包装，直接改变函数行为。两者哲学不同，Python 更灵活但有运行时开销。</p>
-<p>!!! tip "AI 时代思考 🤖"
-    装饰器是 Python 中少数几个 AI <strong>写得出但你必须理解</strong>的特性之一。当你让 AI 写一个"带缓存的函数"时，它会给你 <code>@lru_cache</code>，但你需要知道：</p>
-<div class="highlight"><pre><span></span><code>- 缓存是基于参数的哈希，参数必须是可哈希的
-- 缓存不会自动过期，内存可能无限增长
-- 在类方法上使用 `@lru_cache` 有 `self` 的坑
-
-理解装饰器的原理，才能判断 AI 给的方案是否适合你的场景。
-</code></pre></div>
+<div class="admonition tip">
+<p class="admonition-title">AI 时代思考 🤖</p>
+<p>装饰器是 Python 中少数几个 AI <strong>写得出但你必须理解</strong>的特性之一。当你让 AI 写一个"带缓存的函数"时，它会给你 <code>@lru_cache</code>，但你需要知道：</p>
+<ul>
+<li>缓存是基于参数的哈希，参数必须是可哈希的</li>
+<li>缓存不会自动过期，内存可能无限增长</li>
+<li>在类方法上使用 <code>@lru_cache</code> 有 <code>self</code> 的坑</li>
+</ul>
+<p>理解装饰器的原理，才能判断 AI 给的方案是否适合你的场景。</p>
+</div>
 <hr />
 <h2 id="_14">方法和函数的区别</h2>
 <p>前面我们反复提到"方法偷偷传入 self"，现在来彻底搞清楚这件事。</p>
@@ -2044,8 +2049,10 @@ Python类对象
 <a id="__codelineno-50-5" name="__codelineno-50-5" href="#__codelineno-50-5"></a><span class="k">class</span><span class="w"> </span><span class="nc">D</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">B</span><span class="p">,</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">C</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">};</span>
 </code></pre></div>
 <p>Python 不需要这些，MRO 帮你搞定了。</p>
-<p>!!! tip "AI 时代思考 🤖"
-    多继承是一个 AI 特别容易写出但你需要仔细审查的场景。AI 可以给你生成合法的多继承代码，但它不一定知道你的 MRO 顺序是否符合业务逻辑。在 code review 时，看到多继承就要亲手打印一下 <code>__mro__</code>，确认方法解析顺序是你期望的。</p>
+<div class="admonition tip">
+<p class="admonition-title">AI 时代思考 🤖</p>
+<p>多继承是一个 AI 特别容易写出但你需要仔细审查的场景。AI 可以给你生成合法的多继承代码，但它不一定知道你的 MRO 顺序是否符合业务逻辑。在 code review 时，看到多继承就要亲手打印一下 <code>__mro__</code>，确认方法解析顺序是你期望的。</p>
+</div>
 <hr />
 <h2 id="_25">调用超类方法</h2>
 <p>在子类中重写了父类方法后，如果还想调用父类的实现，用 <code>super()</code>：</p>
@@ -2306,12 +2313,14 @@ Python类对象
 <a id="__codelineno-61-14" name="__codelineno-61-14" href="#__codelineno-61-14"></a>            <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>  <span class="c1"># 保证文件一定被关闭</span>
 <a id="__codelineno-61-15" name="__codelineno-61-15" href="#__codelineno-61-15"></a>            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;文件已关闭&quot;</span><span class="p">)</span>
 </code></pre></div>
-<p>!!! note "<img alt="💡" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@16.0.1/assets/svg/1f4a1.svg" title=":bulb:" /> 更 Pythonic 的写法"
-    实际上，Python 推荐用 <code>with</code> 语句管理资源，更简洁：
-    <div class="highlight"><pre><span></span><code><a id="__codelineno-62-1" name="__codelineno-62-1" href="#__codelineno-62-1"></a><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<div class="admonition note">
+<p class="admonition-title"><img alt="💡" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@16.0.1/assets/svg/1f4a1.svg" title=":bulb:" /> 更 Pythonic 的写法</p>
+<p>实际上，Python 推荐用 <code>with</code> 语句管理资源，更简洁：
+<div class="highlight"><pre><span></span><code><a id="__codelineno-62-1" name="__codelineno-62-1" href="#__codelineno-62-1"></a><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
 <a id="__codelineno-62-2" name="__codelineno-62-2" href="#__codelineno-62-2"></a>    <span class="n">content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 <a id="__codelineno-62-3" name="__codelineno-62-3" href="#__codelineno-62-3"></a><span class="c1"># 离开 with 块后文件自动关闭，相当于 C++ 的 RAII</span>
 </code></pre></div></p>
+</div>
 <h3 id="_30">自定义异常</h3>
 <p>自定义异常就是继承 <code>Exception</code>（或其子类）：</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-63-1" name="__codelineno-63-1" href="#__codelineno-63-1"></a><span class="k">class</span> <span class="nc">BirdError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
@@ -2402,16 +2411,17 @@ Python类对象
 </tbody>
 </table>
 <p>C++ 可以 throw 任意类型（包括 <code>int</code>），Python 只能 throw 继承自 <code>BaseException</code> 的对象。</p>
-<p>!!! tip "AI 时代思考 🤖"
-    AI 生成的代码经常在异常处理上偷懒——要么 <code>except Exception: pass</code>（吞掉所有错误），要么完全不处理。</p>
-<div class="highlight"><pre><span></span><code>你需要判断的是：
-
-- 这个错误**应该被捕获并恢复**，还是**应该让它传播**？
-- `finally` 块是否会有副作用（比如关闭一个从未打开的连接）？
-- 自定义异常是否携带了足够的上下文信息方便调试？
-
-异常设计是软件架构层面的判断，AI 做不了——它需要你来决定。
-</code></pre></div>
+<div class="admonition tip">
+<p class="admonition-title">AI 时代思考 🤖</p>
+<p>AI 生成的代码经常在异常处理上偷懒——要么 <code>except Exception: pass</code>（吞掉所有错误），要么完全不处理。</p>
+<p>你需要判断的是：</p>
+<ul>
+<li>这个错误<strong>应该被捕获并恢复</strong>，还是<strong>应该让它传播</strong>？</li>
+<li><code>finally</code> 块是否会有副作用（比如关闭一个从未打开的连接）？</li>
+<li>自定义异常是否携带了足够的上下文信息方便调试？</li>
+</ul>
+<p>异常设计是软件架构层面的判断，AI 做不了——它需要你来决定。</p>
+</div>
 
 
 
